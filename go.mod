@@ -1,4 +1,4 @@
-module github.com/eroatta/phrase-finder
+module github.com/eroatta/nounphrases
 
 go 1.12
 
