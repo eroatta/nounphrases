@@ -1,8 +1,9 @@
-package finder
+package main_test
 
 import (
 	"testing"
 
+	finder "github.com/eroatta/phrase-finder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +21,7 @@ func TestFind_ShouldReturnNounPhrasesFromText(t *testing.T) {
 		The "omitempty" option specifies that the field should be omitted from the encoding if the field has an empty value, defined as false, 0, a nil pointer, a nil interface value, and any empty array, slice, map, or string.
 		As a special case, if the field tag is "-", the field is always omitted. Note that a field with name "-" can still be generated using the tag "-,". 
 	`
-	got, err := Find(text)
+	got, err := finder.Find(text)
 
 	assert.NoError(t, err, "no error should be raised")
 	assert.Equal(t, 29, len(got))
