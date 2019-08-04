@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"gopkg.in/jdkato/prose.v2"
@@ -51,41 +52,42 @@ func tryPhraseExtractionFromPOSTagging() {
 	Array and slice values encode as JSON arrays, except that []byte encodes as a base64-encoded string, and a nil slice encodes as the null JSON value.
 	Struct values encode as JSON objects. Each exported struct field becomes a member of the object, using the field name as the object key, unless the field is omitted for one of the reasons given below.
 	The encoding of each struct field can be customized by the format string stored under the "json" key in the struct field's tag. The format string gives the name of the field, possibly followed by a comma-separated list of options. The name may be empty in order to specify options without overriding the default field name.
-	The \"omitempty\" option specifies that the field should be omitted from the encoding if the field has an empty value, defined as false, 0, a nil pointer, a nil interface value, and any empty array, slice, map, or string.
-	As a special case, if the field tag is \"-\", the field is always omitted. Note that a field with name "-" can still be generated using the tag "-,". 
+	The "omitempty" option specifies that the field should be omitted from the encoding if the field has an empty value, defined as false, 0, a nil pointer, a nil interface value, and any empty array, slice, map, or string.
+	As a special case, if the field tag is "-", the field is always omitted. Note that a field with name "-" can still be generated using the tag "-,". 
 	`
 	doc, err := prose.NewDocument(funcComments)
 	if err != nil {
 		log.Fatal(err)
 	}
+	/*
+		nouns := map[string]bool{
+			"NN":   true, // noun, singular or mass
+			"NNP":  true, // noun, proper singular
+			"NNPS": true, // noun, proper plural
+			"NNS":  true, // noun, plural
+		}*/
+	/*
+		for i, sent := range doc.Sentences() {
+			fmt.Println(fmt.Sprintf("#%d. Line: %s", i, sent.Text))
+			if i == 0 || i == 2 {
+				line, err := prose.NewDocument(sent.Text)
+				if err != nil {
+					log.Fatal(err)
+				}
 
-	nouns := map[string]bool{
-		"NN":   true, // noun, singular or mass
-		"NNP":  true, // noun, proper singular
-		"NNPS": true, // noun, proper plural
-		"NNS":  true, // noun, plural
-	}
-
-	for i, sent := range doc.Sentences() {
-		fmt.Println(fmt.Sprintf("#%d. Line: %s", i, sent.Text))
-		if i == 0 || i == 2 {
-			line, err := prose.NewDocument(sent.Text)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			for _, tok := range line.Tokens() {
-				if nouns[tok.Tag] {
-					//	fmt.Println(tok.Text, tok.Tag)
+				for _, tok := range line.Tokens() {
+					if nouns[tok.Tag] {
+						//	fmt.Println(tok.Text, tok.Tag)
+					}
 				}
 			}
 		}
-	}
+	*/
 
 	fmt.Println("Let's try to extract phrases!")
 	for i, sent := range doc.Sentences() {
-		fmt.Println(fmt.Sprintf("Analyzing sentence #%d: %s", i+1, sent))
-		for j, phrase := range extract(sent.Text) {
+		fmt.Println(fmt.Sprintf("Analyzing sentence #%d: %s", i+1, sent.Text))
+		for j, phrase := range extract(strings.TrimSuffix(strings.TrimPrefix(sent.Text, "{"), "}")) {
 			fmt.Println(fmt.Sprintf("Phrase #%d: %s", j+1, phrase))
 		}
 	}
@@ -131,7 +133,9 @@ func extract(sentence string) []string {
 	}
 
 	normalizedTokens := normalizeTokens(parsed.Tokens())
-	fmt.Println(normalizedTokens)
+	//fmt.Println(normalizedTokens)
+	normalizedTokens = filterNonWordTokens(normalizedTokens)
+	//fmt.Println(normalizedTokens)
 
 	merge := true
 	for merge == true {
@@ -181,6 +185,25 @@ func filterInsignificantSuffixes(chunk []prose.Token) []prose.Token {
 	}
 
 	return filteredTokens
+}
+
+var word = regexp.MustCompile("[a-zA-z0-9-_]+")
+var nounTags = map[string]bool{
+	"NN":  true,
+	"NNP": true,
+}
+
+func filterNonWordTokens(chunk []prose.Token) []prose.Token {
+	wordTokens := []prose.Token{}
+	for _, tok := range chunk {
+		if nounTags[tok.Tag] && !word.MatchString(tok.Text) {
+			continue
+		}
+
+		wordTokens = append(wordTokens, tok)
+	}
+
+	return wordTokens
 }
 
 // normalizeTokens normalizes the corpus tags: ("NN", "NN-PL", "NNS") -> "NN"
