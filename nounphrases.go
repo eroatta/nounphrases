@@ -77,7 +77,6 @@ func extract(sentence string) ([]string, error) {
 					Tag:   value,
 					Text:  fmt.Sprintf("%s %s", t1.Text, t2.Text),
 					Label: ""}
-				//tokens[i] = mergedTok
 				tokens = append(tokens[:i+1], tokens[i+2:]...)
 				break
 			}
