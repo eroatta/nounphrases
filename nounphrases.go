@@ -1,4 +1,4 @@
-package nounphrases
+package finder
 
 import (
 	"fmt"
