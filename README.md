@@ -1,14 +1,36 @@
-# phrase-finder
+# nounphrases
 
 ## Introduction
 
-_phrase-finder_ is an implementation for the  "probabilistic model for automatically extracting English noun phrases without part-of-speech tagging or any syntactic analysis", proposed by Feng and Croft on their paper called "Probabilistic techniques for phrase extraction".
-As they stated, the technique is based on a **Markov model**, whose initial parameters are estimated by a phrase lookup program with a phrase dictionary, then optimized by a set of **maximum entropy** (ME) parameters for a set of morphological features.
-Using the **Viterbi algorithm** with the trained Markov model, the program can dynamically extract noun phrases from input text.
+_nounphrases_ allows us a to find noun phrases on a given text. It splits the input text in several sentences and then processes every sentence, extracting the list of noun phrases encountered on them.
+
+The algorithm is port of the noun phrases extractor from the [TextBlob](https://github.com/sloria/TextBlob/blob/master/textblob/en/np_extractors.py#L135) Python's library, which uses POS tagging.
 
 ## Usage
 
-WIP
+The `Find(string)` function will return an array of phrases found on the given text.
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/eroatta/nounphrases"
+    "log"
+)
+
+func main() {
+    phrases, err := nounphrases.Find("We have red cars and yellow trucks")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for i, phr := range phrases {
+        fmt.Println(fmt.Sprintf("Phrase #%d: %s", i, phr))
+    }
+}
+
+```
 
 ## License
 
