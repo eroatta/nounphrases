@@ -64,27 +64,32 @@ func extract(sentence string) ([]string, error) {
 		tokens = append(tokens, nt)
 	}
 
-	merge := true
-	for merge == true {
-		merge = false
-		for i := 0; i < len(tokens)-1; i++ {
-			t1, t2 := tokens[i], tokens[i+1]
-			key := fmt.Sprintf("%s+%s", t1.Tag, t2.Tag)
-			value := phrasePairs[key]
-			if value != "" {
-				merge = true
-				tokens[i] = prose.Token{
-					Tag:   value,
-					Text:  fmt.Sprintf("%s %s", t1.Text, t2.Text),
-					Label: ""}
-				tokens = append(tokens[:i+1], tokens[i+2:]...)
-				break
-			}
+	if len(tokens) < 2 {
+		return []string{}, nil
+	}
+
+	processedTokens := make([]prose.Token, 0)
+	tag := tokens[0].Tag
+	text := tokens[0].Text
+	for i := 1; i < len(tokens); i++ {
+		t2 := tokens[i]
+		key := fmt.Sprintf("%s+%s", tag, t2.Tag)
+		value := phrasePairs[key]
+		if value != "" {
+			tag = value
+			text = fmt.Sprintf("%s %s", text, t2.Text)
+		} else {
+			processedTokens = append(processedTokens, prose.Token{
+				Tag:   tag,
+				Text:  text,
+				Label: ""})
+			tag = t2.Tag
+			text = t2.Text
 		}
 	}
 
 	nounPhrases := []string{}
-	for _, tok := range tokens {
+	for _, tok := range processedTokens {
 		if tok.Tag == "NNI" {
 			nounPhrases = append(nounPhrases, tok.Text)
 		}
