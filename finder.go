@@ -93,6 +93,11 @@ func extract(sentence string) ([]string, error) {
 		} else {
 			tag = value
 			text = fmt.Sprintf("%s %s", text, t2.Text)
+
+			// check for the last element
+			if i == len(tokens)-1 && tag == "NNI" {
+				nounPhrases = append(nounPhrases, text)
+			}
 		}
 	}
 
