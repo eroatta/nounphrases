@@ -2,6 +2,7 @@ package nounphrases
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 
@@ -34,14 +35,21 @@ func Find(text string) ([]string, error) {
 		return []string{}, err
 	}
 
-	phrases := []string{}
-	for _, sentence := range parsedText.Sentences() {
-		foundPhrases, err := extract(sentence.Text)
-		if err != nil {
-			return phrases, err
-		}
+	foundPhrases := make(chan []string)
+	sentences := parsedText.Sentences()
+	for _, sentence := range sentences {
+		go func(text string) {
+			phrases, err := extract(text)
+			if err != nil {
+				log.Println(fmt.Sprintf("Error: (%s) on sentence: %s", err, text))
+			}
+			foundPhrases <- phrases
+		}(sentence.Text)
+	}
 
-		phrases = append(phrases, foundPhrases...)
+	phrases := []string{}
+	for i := 0; i < len(sentences); i++ {
+		phrases = append(phrases, <-foundPhrases...)
 	}
 
 	return phrases, nil
