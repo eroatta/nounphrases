@@ -68,30 +68,23 @@ func extract(sentence string) ([]string, error) {
 		return []string{}, nil
 	}
 
-	processedTokens := make([]prose.Token, 0)
+	nounPhrases := []string{}
+
 	tag := tokens[0].Tag
 	text := tokens[0].Text
 	for i := 1; i < len(tokens); i++ {
 		t2 := tokens[i]
-		key := fmt.Sprintf("%s+%s", tag, t2.Tag)
-		value := phrasePairs[key]
-		if value != "" {
-			tag = value
-			text = fmt.Sprintf("%s %s", text, t2.Text)
-		} else {
-			processedTokens = append(processedTokens, prose.Token{
-				Tag:   tag,
-				Text:  text,
-				Label: ""})
+		value := phrasePairs[fmt.Sprintf("%s+%s", tag, t2.Tag)]
+		if value == "" {
+			if tag == "NNI" {
+				nounPhrases = append(nounPhrases, text)
+			}
+
 			tag = t2.Tag
 			text = t2.Text
-		}
-	}
-
-	nounPhrases := []string{}
-	for _, tok := range processedTokens {
-		if tok.Tag == "NNI" {
-			nounPhrases = append(nounPhrases, tok.Text)
+		} else {
+			tag = value
+			text = fmt.Sprintf("%s %s", text, t2.Text)
 		}
 	}
 
