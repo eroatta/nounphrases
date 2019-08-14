@@ -2,7 +2,6 @@ package nounphrases
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
@@ -43,7 +42,6 @@ func Find(text string) ([]string, error) {
 		go func(text string) {
 			phrases, err := extract(text)
 			if err != nil {
-				log.Println(fmt.Sprintf("Error: (%s) on sentence: %s", err, text))
 				errorc <- err
 			}
 			foundPhrases <- phrases
