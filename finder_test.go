@@ -58,5 +58,6 @@ func TestFind_ShouldReturnNounPhrasesFromText(t *testing.T) {
 		"special case",
 		"field tag",
 	}
+
 	assert.ElementsMatch(t, expected, got)
 }

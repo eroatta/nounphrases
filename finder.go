@@ -36,12 +36,15 @@ func Find(text string) ([]string, error) {
 	}
 
 	foundPhrases := make(chan []string)
+	errorc := make(chan error, 1)
+
 	sentences := parsedText.Sentences()
 	for _, sentence := range sentences {
 		go func(text string) {
 			phrases, err := extract(text)
 			if err != nil {
 				log.Println(fmt.Sprintf("Error: (%s) on sentence: %s", err, text))
+				errorc <- err
 			}
 			foundPhrases <- phrases
 		}(sentence.Text)
@@ -49,7 +52,12 @@ func Find(text string) ([]string, error) {
 
 	phrases := []string{}
 	for i := 0; i < len(sentences); i++ {
-		phrases = append(phrases, <-foundPhrases...)
+		select {
+		case phr := <-foundPhrases:
+			phrases = append(phrases, phr...)
+		case err := <-errorc:
+			return phrases, err
+		}
 	}
 
 	return phrases, nil
