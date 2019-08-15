@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 
 	"gopkg.in/jdkato/prose.v2"
 )
@@ -33,28 +34,40 @@ func Find(text string) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
-
-	foundPhrases := make(chan []string)
-	errorc := make(chan error, 1)
-
 	sentences := parsedText.Sentences()
+
+	// parallelize sentence processing
+	var wg sync.WaitGroup
+	wg.Add(len(sentences))
+	phrc := make(chan []string)
+	errc := make(chan error)
+
 	for _, sentence := range sentences {
 		go func(text string) {
+			defer wg.Done()
 			phrases, err := extract(text)
 			if err != nil {
-				errorc <- err
+				errc <- err
 			}
-			foundPhrases <- phrases
+			phrc <- phrases
 		}(sentence.Text)
 	}
 
+	// closer function
+	go func() {
+		wg.Wait()
+		close(phrc)
+		close(errc)
+	}()
+
+	// merge results
 	phrases := []string{}
 	for i := 0; i < len(sentences); i++ {
 		select {
-		case phr := <-foundPhrases:
+		case phr := <-phrc:
 			phrases = append(phrases, phr...)
-		case err := <-errorc:
-			return phrases, err
+		case err := <-errc:
+			return []string{}, err
 		}
 	}
 
